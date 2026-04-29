@@ -23,4 +23,10 @@ Task tool (localSuperpowers:code-reviewer):
 - Is the implementation following the file structure from the plan?
 - Did this implementation create new files that are already large, or significantly grow existing files? (Don't flag pre-existing file sizes — focus on what this change contributed.)
 
+**Test decision review** — match coverage to the code, not to a coverage target:
+- If the implementation has logic (branching, transformation, validation, calculation, state changes, error handling), the reviewer should expect tests covering it. Flag missing tests as Important.
+- If the implementation is pure passthrough/boilerplate (e.g. a UseCase that calls a single repository method, DI wiring, plain data classes), the reviewer should NOT demand tests. Flag tests that only mirror the implementation or `verify(mock).method()` without an assertion as Important — vacuous tests are noise.
+- If the plan said `Tests: skip` but the code has real branching or mapping, that's an Important issue (skipped tests on real logic).
+- If the plan said `Tests: required` but the code is just a passthrough wrapper, that's a Minor issue (plan miscalled the test decision; tests aren't necessarily wrong, but ask whether they assert anything).
+
 **Code reviewer returns:** Strengths, Issues (Critical/Important/Minor), Assessment

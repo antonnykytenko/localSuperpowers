@@ -1,40 +1,54 @@
 ---
 name: test-driven-development
-description: Use when implementing any feature or bugfix, before writing implementation code
+description: Use when implementing code that contains logic — branching, transformation, validation, calculation, state, or error handling — before writing implementation code
 ---
 
 # Test-Driven Development (TDD)
 
 ## Overview
 
-Write the test first. Watch it fail. Write minimal code to pass.
+**Test logic, not boilerplate.** Decide whether the code under change has logic worth testing. If it does, write the test first, watch it fail, write minimal code to pass. If it doesn't, implement directly and move on.
 
-**Core principle:** If you didn't watch the test fail, you don't know if it tests the right thing.
+**Core principle:** If you didn't watch the test fail, you don't know if it tests the right thing. But a test on a passthrough wrapper proves nothing — it asserts that the language works.
 
-**Violating the letter of the rules is violating the spirit of the rules.**
+## Step 1: Decide If This Code Warrants Tests
 
-## When to Use
+Before writing anything, ask: **"What would the test assert that isn't already obvious from the type system or one-line implementation?"**
 
-**Always:**
-- New features
-- Bug fixes
-- Refactoring
-- Behavior changes
+If the answer is "the value flows through" or "the framework works," skip the test.
 
-**Exceptions (ask your human partner):**
-- Throwaway prototypes
+**Test when the code has any of:**
+- Branching / conditionals / fallbacks (`if (x == null) default else x`)
+- Transformation or mapping (DTO ↔ domain model with non-trivial fields)
+- Validation rules
+- Calculations or aggregation
+- State changes / state machines / state management
+- Error handling, retries, recovery
+- Combining multiple inputs (Flow combine, Result merging)
+- Side-effect coordination (ordering, cancellation)
+
+**Skip tests when the code is:**
+- Pure delegation — UseCase / Repository method that just forwards to a single source (`fun get() = prefs.getString(KEY, null)`)
+- Trivial getters/setters or property exposure
+- Plain data classes, DTOs, sealed-class state objects with no methods
+- DI / module / Hilt configuration
 - Generated code
-- Configuration files
+- Pure Compose UI that just renders state with no decision logic
+- One-line wiring / framework adapters where the test would mirror the implementation
 
-Thinking "skip TDD just this once"? Stop. That's rationalization.
+**If unsure:** write the test signature mentally. If the test body would just be `verify(repository).get()` or `assertEquals(prefs.value, useCase.get())`, the test is testing the mock or the language — skip it.
 
-## The Iron Law
+## When TDD Discipline Applies
+
+Once you've decided code warrants a test, the TDD discipline below is non-negotiable for *that code*. The decision is what to test; the discipline is how to test it.
+
+**The Iron Law (for code you decided needs tests):**
 
 ```
-NO PRODUCTION CODE WITHOUT A FAILING TEST FIRST
+NO LOGIC SHIPS WITHOUT A FAILING TEST FIRST
 ```
 
-Write code before the test? Delete it. Start over.
+Wrote logic before the test? Delete it. Start over.
 
 **No exceptions:**
 - Don't keep it as "reference"
@@ -43,6 +57,8 @@ Write code before the test? Delete it. Start over.
 - Delete means delete
 
 Implement fresh from tests. Period.
+
+This rule does NOT mean "every line needs a test." It means: if you decided this code is worth testing, the test comes first.
 
 ## Red-Green-Refactor
 
@@ -233,16 +249,6 @@ Sunk cost fallacy. The time is already gone. Your choice now:
 
 The "waste" is keeping code you can't trust. Working code without real tests is technical debt.
 
-**"TDD is dogmatic, being pragmatic means adapting"**
-
-TDD IS pragmatic:
-- Finds bugs before commit (faster than debugging after)
-- Prevents regressions (tests catch breaks immediately)
-- Documents behavior (tests show how to use code)
-- Enables refactoring (change freely, tests catch breaks)
-
-"Pragmatic" shortcuts = debugging in production = slower.
-
 **"Tests after achieve the same goals - it's spirit not ritual"**
 
 No. Tests-after answer "What does this do?" Tests-first answer "What should this do?"
@@ -255,37 +261,47 @@ Tests-first force edge case discovery before implementing. Tests-after verify yo
 
 ## Common Rationalizations
 
+These apply once you've decided the code warrants a test. Skipping the test on logic — or skipping the failure-watch step — is what these counter.
+
 | Excuse | Reality |
 |--------|---------|
-| "Too simple to test" | Simple code breaks. Test takes 30 seconds. |
-| "I'll test after" | Tests passing immediately prove nothing. |
+| "I'll test after" | Tests passing immediately prove nothing. If logic is worth testing, write the test first. |
 | "Tests after achieve same goals" | Tests-after = "what does this do?" Tests-first = "what should this do?" |
 | "Already manually tested" | Ad-hoc ≠ systematic. No record, can't re-run. |
-| "Deleting X hours is wasteful" | Sunk cost fallacy. Keeping unverified code is technical debt. |
+| "Deleting X hours is wasteful" | Sunk cost fallacy. Keeping unverified logic is technical debt. |
 | "Keep as reference, write tests first" | You'll adapt it. That's testing after. Delete means delete. |
 | "Need to explore first" | Fine. Throw away exploration, start with TDD. |
 | "Test hard = design unclear" | Listen to test. Hard to test = hard to use. |
-| "TDD will slow me down" | TDD faster than debugging. Pragmatic = test-first. |
 | "Manual test faster" | Manual doesn't prove edge cases. You'll re-test every change. |
-| "Existing code has no tests" | You're improving it. Add tests for existing code. |
+| "Existing code has no tests" | If you're changing logic, add a test for the change. |
+
+**Counter-rationalizations — don't skip tests on logic by mislabeling it boilerplate:**
+
+| Excuse | Reality |
+|--------|---------|
+| "It's just a UseCase" | UseCases with mapping, fallbacks, or combining are logic. Test them. |
+| "It's just a Repository" | Repositories with caching, error mapping, or merging sources are logic. Test them. |
+| "It's just a ViewModel" | ViewModels managing state, side effects, or transformations are logic. Test them. |
+| "It's just one if-statement" | One branch is logic. Two paths exist; test both. |
 
 ## Red Flags - STOP and Start Over
 
+For code you decided needs tests:
 - Code before test
 - Test after implementation
 - Test passes immediately
 - Can't explain why test failed
 - Tests added "later"
-- Rationalizing "just this once"
 - "I already manually tested it"
-- "Tests after achieve the same purpose"
-- "It's about spirit not ritual"
 - "Keep as reference" or "adapt existing code"
 - "Already spent X hours, deleting is wasteful"
-- "TDD is dogmatic, I'm being pragmatic"
-- "This is different because..."
 
-**All of these mean: Delete code. Start over with TDD.**
+For the test-decision step:
+- Calling something "boilerplate" because you don't want to test it
+- Skipping tests because the class name has "UseCase" / "Repository" / "ViewModel" in it (the name doesn't decide; the body does)
+- Skipping tests on a method with branching, mapping, or error handling
+
+**When in doubt about whether to test, ask: "If I rewrote this from scratch, would the test catch a behavior bug?" Yes → test. No → skip.**
 
 ## Example: Bug Fix
 
@@ -328,16 +344,16 @@ Extract validation for multiple fields if needed.
 
 Before marking work complete:
 
-- [ ] Every new function/method has a test
-- [ ] Watched each test fail before implementing
+- [ ] Every function/method with logic has a test (passthroughs and DI/config code don't)
+- [ ] For each test written: watched it fail before implementing
 - [ ] Each test failed for expected reason (feature missing, not typo)
 - [ ] Wrote minimal code to pass each test
 - [ ] All tests pass
 - [ ] Output pristine (no errors, warnings)
-- [ ] Tests use real code (mocks only if unavoidable)
-- [ ] Edge cases and errors covered
+- [ ] Tests use real code (mocks only when unavoidable, never just to test the mock)
+- [ ] Edge cases and errors covered for tested logic
 
-Can't check all boxes? You skipped TDD. Start over.
+Tests-first only applies to the code you decided needs tests. Skipping a test on a passthrough is fine; skipping the failure-watch on logic is not.
 
 ## When Stuck
 
@@ -364,8 +380,10 @@ When adding mocks or test utilities, read @testing-anti-patterns.md to avoid com
 ## Final Rule
 
 ```
-Production code → test exists and failed first
-Otherwise → not TDD
+Logic with branching, transformation, validation, state, or error handling
+  → test exists and failed first
+Pure passthrough, config, generated code, trivial accessors
+  → no test needed; implement directly
 ```
 
-No exceptions without your human partner's permission.
+The decision is yours: what is logic, and what is glue. The discipline applies once you've decided to test.

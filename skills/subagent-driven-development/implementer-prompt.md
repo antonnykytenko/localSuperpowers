@@ -29,12 +29,18 @@ Task tool (general-purpose):
     ## Your Job
 
     Once you're clear on requirements:
-    1. Implement exactly what the task specifies
-    2. Write tests (following TDD if task says to)
-    3. Verify implementation works
+    1. Implement exactly what the task specifies — match the **Contract** (signature/shape) and **Behavior** spec, but write the code yourself in idiomatic project style
+    2. Honor the task's `Tests:` directive — if `required`, write tests first (TDD red→green); if `skip`, do not invent tests for trivial passthrough/boilerplate
+    3. Verify implementation works (tests pass for `required`; build/compile clean for `skip`)
     4. Commit your work
     5. Self-review (see below)
     6. Report back
+
+    **About code in the plan:** plans intentionally specify behavior over code. If the task only gives a contract (signature) and behavior bullets, that is the spec — write the code yourself, matching the project's style and existing patterns. If the task includes a code block, treat it as authoritative (it was included because the signature is locked, the user provided it, or there's an idiom worth pinning down) — match it.
+
+    **If the plan says `Tests: skip` but you discover the code actually has logic** (a branch, a fallback, a transformation, an error path), stop and report it as DONE_WITH_CONCERNS — the test decision in the plan was wrong, and the controller needs to know.
+
+    **If the plan says `Tests: required` but the code turns out to be pure passthrough** with no behavior worth asserting, report DONE_WITH_CONCERNS rather than writing a vacuous test that mirrors the implementation.
 
     Work from: [directory]
 
@@ -91,9 +97,11 @@ Task tool (general-purpose):
     - Did I follow existing patterns in the codebase?
 
     **Testing:**
-    - Do tests actually verify behavior (not just mock behavior)?
-    - Did I follow TDD if required?
-    - Are tests comprehensive?
+    - Did I match the plan's `Tests:` directive? (`required` → tests written first and passing; `skip` → no tests added)
+    - For tests I wrote: do they verify real behavior, not mock behavior?
+    - For tests I wrote: did I follow TDD (red → green)?
+    - For tests I wrote: are edge cases and error paths covered?
+    - Did I avoid writing tests that just mirror the implementation? (Vacuous tests are worse than no tests.)
 
     If you find issues during self-review, fix them now before reporting.
 

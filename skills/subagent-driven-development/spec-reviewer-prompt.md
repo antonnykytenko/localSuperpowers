@@ -47,6 +47,7 @@ Task tool (general-purpose):
     - Did they build things that weren't requested?
     - Did they over-engineer or add unnecessary features?
     - Did they add "nice to haves" that weren't in spec?
+    - Did they ignore the task's `Tests:` directive? (`required` → tests must exist; `skip` → no tests should have been added unless the implementer flagged a plan miscall as DONE_WITH_CONCERNS)
 
     **Misunderstandings:**
     - Did they interpret requirements differently than intended?
