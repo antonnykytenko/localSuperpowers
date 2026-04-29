@@ -1,67 +1,54 @@
-# Installing Superpowers for Codex
+# Installing localSuperpowers for Codex
 
-Enable superpowers skills in Codex via native skill discovery. Just clone and symlink.
+Enable localSuperpowers skills in Codex via native skill discovery. This plugin
+is a local fork of [obra/superpowers](https://github.com/obra/superpowers); the
+source already lives in this checkout, so installation is just a symlink.
 
 ## Prerequisites
 
-- Git
+- A local checkout of this repository (referred to below as `<plugin-root>`,
+  e.g. `~/agents/plugins/localSuperpowers`)
 
 ## Installation
 
-1. **Clone the superpowers repository:**
-   ```bash
-   git clone https://github.com/obra/superpowers.git ~/.codex/superpowers
-   ```
-
-2. **Create the skills symlink:**
+1. **Create the skills symlink:**
    ```bash
    mkdir -p ~/.agents/skills
-   ln -s ~/.codex/superpowers/skills ~/.agents/skills/superpowers
+   ln -s <plugin-root>/skills ~/.agents/skills/localSuperpowers
    ```
 
    **Windows (PowerShell):**
    ```powershell
    New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.agents\skills"
-   cmd /c mklink /J "$env:USERPROFILE\.agents\skills\superpowers" "$env:USERPROFILE\.codex\superpowers\skills"
+   cmd /c mklink /J "$env:USERPROFILE\.agents\skills\localSuperpowers" "<plugin-root>\skills"
    ```
 
-3. **Restart Codex** (quit and relaunch the CLI) to discover the skills.
-
-## Migrating from old bootstrap
-
-If you installed superpowers before native skill discovery, you need to:
-
-1. **Update the repo:**
-   ```bash
-   cd ~/.codex/superpowers && git pull
-   ```
-
-2. **Create the skills symlink** (step 2 above) — this is the new discovery mechanism.
-
-3. **Remove the old bootstrap block** from `~/.codex/AGENTS.md` — any block referencing `superpowers-codex bootstrap` is no longer needed.
-
-4. **Restart Codex.**
+2. **Restart Codex** (quit and relaunch the CLI) to discover the skills.
 
 ## Verify
 
 ```bash
-ls -la ~/.agents/skills/superpowers
+ls -la ~/.agents/skills/localSuperpowers
 ```
 
-You should see a symlink (or junction on Windows) pointing to your superpowers skills directory.
+You should see a symlink (or junction on Windows) pointing to this plugin's
+`skills/` directory.
 
 ## Updating
 
+This plugin tracks an upstream `superpowers` checkout. To pull upstream changes:
+
 ```bash
-cd ~/.codex/superpowers && git pull
+cd <plugin-root>
+git fetch origin
+git merge origin/main      # expect conflicts on namespace renames
 ```
 
-Skills update instantly through the symlink.
+Skills update instantly through the symlink — no Codex restart needed for
+content changes.
 
 ## Uninstalling
 
 ```bash
-rm ~/.agents/skills/superpowers
+rm ~/.agents/skills/localSuperpowers
 ```
-
-Optionally delete the clone: `rm -rf ~/.codex/superpowers`.
