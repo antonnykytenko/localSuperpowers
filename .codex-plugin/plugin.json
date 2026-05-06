@@ -1,6 +1,6 @@
 {
   "name": "localSuperpowers",
-  "version": "5.0.7",
+  "version": "5.1.0",
   "description": "Local fork of superpowers — an agentic skills framework & software development methodology: planning, TDD, debugging, and collaboration workflows.",
   "author": {
     "name": "Jesse Vincent",
