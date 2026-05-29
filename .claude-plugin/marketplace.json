@@ -9,7 +9,7 @@
     {
       "name": "localSuperpowers",
       "description": "Local fork of the superpowers core skills library: TDD, debugging, collaboration patterns, and proven techniques",
-      "version": "5.1.0",
+      "version": "5.2.0",
       "source": "./",
       "author": {
         "name": "Jesse Vincent",
