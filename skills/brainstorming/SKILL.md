@@ -27,9 +27,10 @@ You MUST create a task for each of these items and complete them in order:
 4. **Propose 2-3 approaches** — with trade-offs and your recommendation
 5. **Present design** — in sections scaled to their complexity, get user approval after each section
 6. **Write design doc** — save to `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` (DO NOT commit — `docs/superpowers/` is gitignored on purpose)
-7. **Spec self-review** — quick inline check for placeholders, contradictions, ambiguity, scope (see below)
-8. **User reviews written spec** — ask user to review the spec file before proceeding
-9. **Transition to implementation** — invoke writing-plans skill to create implementation plan
+7. **Spec self-review** — quick inline check for placeholders, contradictions, ambiguity, scope; fix issues before external review
+8. **Codex CLI spec review** — use a persistent Codex CLI session to review the spec; fix issues and re-review in that same session until Codex approves (see below)
+9. **User reviews written spec** — only after Codex CLI approval, ask user to review the spec file before proceeding
+10. **Transition to implementation** — invoke writing-plans skill to create implementation plan
 
 ## Process Flow
 
@@ -44,6 +45,7 @@ digraph brainstorming {
     "User approves design?" [shape=diamond];
     "Write design doc" [shape=box];
     "Spec self-review\n(fix inline)" [shape=box];
+    "Codex CLI spec review\n(same session until approved)" [shape=box];
     "User reviews spec?" [shape=diamond];
     "Invoke writing-plans skill" [shape=doublecircle];
 
@@ -57,7 +59,8 @@ digraph brainstorming {
     "User approves design?" -> "Present design sections" [label="no, revise"];
     "User approves design?" -> "Write design doc" [label="yes"];
     "Write design doc" -> "Spec self-review\n(fix inline)";
-    "Spec self-review\n(fix inline)" -> "User reviews spec?";
+    "Spec self-review\n(fix inline)" -> "Codex CLI spec review\n(same session until approved)";
+    "Codex CLI spec review\n(same session until approved)" -> "User reviews spec?";
     "User reviews spec?" -> "Write design doc" [label="changes requested"];
     "User reviews spec?" -> "Invoke writing-plans skill" [label="approved"];
 }
@@ -114,21 +117,66 @@ digraph brainstorming {
 - **DO NOT commit the spec.** `docs/superpowers/` is in `.gitignore` by design — specs and plans are local working artifacts, not repository history. The folder being gitignored does NOT mean "don't write here" — read and write freely; just never `git add` or commit anything under `docs/superpowers/`. If you see the folder is empty or untracked, that's expected.
 
 **Spec Self-Review:**
-After writing the spec document, look at it with fresh eyes:
+After writing the spec document, look at it with fresh eyes before external review:
 
 1. **Placeholder scan:** Any "TBD", "TODO", incomplete sections, or vague requirements? Fix them.
 2. **Internal consistency:** Do any sections contradict each other? Does the architecture match the feature descriptions?
 3. **Scope check:** Is this focused enough for a single implementation plan, or does it need decomposition?
 4. **Ambiguity check:** Could any requirement be interpreted two different ways? If so, pick one and make it explicit.
 
-Fix any issues inline. No need to re-review — just fix and move on.
+Fix any issues inline before starting Codex review.
+
+**Codex CLI Spec Review Gate:**
+After self-review passes, review the spec with Codex CLI before asking the user to review it.
+
+1. Check whether Codex CLI is available:
+
+   ```bash
+   command -v codex
+   ```
+
+2. If `codex` is not installed or not on `PATH`, stop and tell the user:
+
+   > "Codex CLI is required for the spec review gate, but I can't find it on PATH. Do you want me to proceed directly to your review, or wait while you install Codex CLI?"
+
+   If the user says to proceed, go to the User Review Gate. If they want Codex installed first, wait; do not ask for user spec review until Codex CLI is available and has approved the spec.
+
+3. Start one dedicated Codex CLI review session and keep using that same session for every re-review of this spec:
+
+   ```bash
+   codex --no-alt-screen -C "$PWD" "You are reviewing a Superpowers design spec for implementation planning. Read skills/brainstorming/spec-document-reviewer-prompt.md and review SPEC_FILE_PATH. Return Approved only if the spec is complete, consistent, clear, appropriately scoped, and YAGNI. Otherwise return Issues Found with specific blocking issues."
+   ```
+
+   Replace `SPEC_FILE_PATH` with the actual spec path. Keep this terminal/session open. Do not dispatch a subagent, do not rely on inline self-review, and do not start a fresh Codex session for re-review. If Codex shows a session id, record it immediately.
+
+   If you cannot keep an interactive Codex process open, use non-interactive resume, not a fresh review:
+
+   ```bash
+   codex exec -C "$PWD" "You are reviewing a Superpowers design spec for implementation planning. Read skills/brainstorming/spec-document-reviewer-prompt.md and review SPEC_FILE_PATH. Return Approved only if the spec is complete, consistent, clear, appropriately scoped, and YAGNI. Otherwise return Issues Found with specific blocking issues."
+   ```
+
+   Then for every follow-up review, resume the recorded session by id:
+
+   ```bash
+   codex exec resume SESSION_ID "I updated SPEC_FILE_PATH to address your findings. Re-review the current file in this same review thread. Return Approved only if no blocking issues remain; otherwise return Issues Found."
+   ```
+
+   If an interactive Codex session is still open, type or paste the follow-up prompt directly into that session instead of using `resume`.
+
+   If the interactive session is closed and you did not record the session id, do not use `--last`; parallel agents or other Codex work may have created a newer session. Start a new Codex review round from the beginning: ask Codex to review the current spec as a fresh first review, record the new session id, and use that new same session for all follow-up re-reviews. Treat any approval from the lost session as invalid unless the current round also returns `Approved`.
+
+   Tell the user what happened briefly:
+
+   > "I lost the Codex review session id, so I'm restarting the Codex review from the beginning in a new session before asking you to review the spec."
+
+4. If Codex reports issues, fix the spec document, then ask Codex to re-review the current file in the same Codex CLI session. Repeat until Codex returns `Approved`.
 
 **User Review Gate:**
-After the spec review loop passes, ask the user to review the written spec before proceeding:
+Only after the Codex CLI spec review returns `Approved`, ask the user to review the written spec before proceeding:
 
-> "Spec written and committed to `<path>`. Please review it and let me know if you want to make any changes before we start writing out the implementation plan."
+> "Spec written to `<path>` and approved by Codex CLI. Please review it and let me know if you want to make any changes before we start writing out the implementation plan."
 
-Wait for the user's response. If they request changes, make them and re-run the spec review loop. Only proceed once the user approves.
+Wait for the user's response. If they request changes, make them, re-run self-review, then re-run the Codex CLI review loop. Only proceed once the user approves.
 
 **Implementation:**
 
