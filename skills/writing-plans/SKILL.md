@@ -79,6 +79,15 @@ This structure informs the task decomposition. Each task should produce self-con
 
 This is shorter, easier to skim, and forces the implementer to choose idiomatic test scaffolding for the project (JUnit5, Kotest, Turbine, etc.) rather than copy-pasting whatever style the plan happened to use.
 
+## Task Right-Sizing
+
+A task is the smallest unit that carries its own test cycle and is worth a
+fresh reviewer's gate. When drawing task boundaries: fold setup,
+configuration, scaffolding, and documentation steps into the task whose
+deliverable needs them; split only where a reviewer could meaningfully
+reject one task while approving its neighbor. Each task ends with an
+independently testable deliverable.
+
 ## Bite-Sized Task Granularity
 
 **Each step is one action (2-5 minutes).**
@@ -136,6 +145,13 @@ When `Tests: skip`, briefly state *why* (e.g. "passthrough to SharedPreferences,
 
 **Tech Stack:** [Key technologies/libraries]
 
+## Global Constraints
+
+[The spec's project-wide requirements — version floors, dependency limits,
+naming and copy rules, platform requirements — one line each, with exact
+values copied verbatim from the spec. Every task's requirements implicitly
+include this section.]
+
 ---
 ```
 
@@ -154,6 +170,12 @@ Default to behavior specs. Drop into code only when "When to Include Code" appli
 - Test: `exact/path/to/FileTest.kt`
 
 **Tests:** required — [one-line reason: "maps DTO to domain with default fallback when name is null"]
+
+**Interfaces:**
+- Consumes: [what this task uses from earlier tasks — exact signatures]
+- Produces: [what later tasks rely on — exact function names, parameter
+  and return types. A task's implementer sees only their own task; this
+  block is how they learn the names and types neighboring tasks use.]
 
 **Contract:** `fun map(dto: Dto): Domain`
 
